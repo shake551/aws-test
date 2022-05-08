@@ -1,13 +1,24 @@
 version: '3'
+
 services:
-  python3:
-    restart: always
-    build: ./
-    container_name: 'aws-test'
-    working_dir: '/root/'
-    tty: true
+  gunicorn:
+    build: .
+    image: gunicorn:20.1.0
+    container_name: gunicorn
+    working_dir: '/root/opt/'
     volumes:
       - ./opt:/root/opt
+      - gunicorn:/var/run/gunicorn
+  nginx:
+    image: nginx:1.17.7
+    container_name: nginx
+    depends_on:
+      - gunicorn
     ports:
-      - 8080:8080
-    command: python opt/manage.py runserver 0:8080
+      - "80:80"
+    volumes:
+      - ./tool/gunicorn/gunicorn.conf:/etc/nginx/conf.d/default.conf
+      - gunicorn:/var/run/gunicorn
+volumes:
+  gunicorn:
+    driver: local
